@@ -1,23 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
-
-// The home route ships no og:image, so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
-export const Route = createFileRoute("/")({
-  component: Index,
-});
-
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
-function Index() {
-  return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
-  );
-}
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { queryOptions,useSuspenseQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { ArrowRight,CalendarDays,MapPin,Trophy,Users,Zap,Search,Ticket,Layers,Clock,ArrowUpRight,Sparkles } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Shell } from '@/features/festival/shell';
+import { EventArt } from '@/features/festival/event-art';
+import { listEvents } from '@/features/festival/api.functions';
+import { categories,dateLabel,headMeta } from '@/features/festival/domain';
+import hero from '@/assets/hack4tech-hero.asset.json';
+export const eventsQuery=queryOptions({queryKey:['events'],queryFn:()=>listEvents(),staleTime:30000});
+export const Route=createFileRoute('/')({head:()=>headMeta('Explore Events','Discover hackathons, coding challenges, robotics, design and more at Hack4Tech 2027.'),loader:({context})=>context.queryClient.ensureQueryData(eventsQuery),component:Catalog});
+function Catalog(){const {data:events}=useSuspenseQuery(eventsQuery);const [category,setCategory]=useState('All events');const [search,setSearch]=useState('');const [demo,setDemo]=useState(true);const visible=events.filter(e=>e.is_demo===demo).filter(e=>(category==='All events'||e.category===category)&&`${e.title} ${e.category} ${e.description}`.toLowerCase().includes(search.toLowerCase()));return <Shell><section className="hero"><img className="hero-image" src={hero.url} alt="Luminous cyan crystal cube at a futuristic technology exhibition"/><div className="hero-content"><div className="eyebrow"><span className="dot"/> HACK4TECH 2027 · THE CAMPUS TECH FEST</div><h1>Big ideas.<br/>Bigger <span>possibilities.</span></h1><p>Code. Create. Compete. Your next breakthrough starts here. Find your event and make your mark.</p><div className="hero-buttons"><Button onClick={()=>document.getElementById('events')?.scrollIntoView({behavior:'smooth'})}>Explore events <ArrowRight/></Button><Button variant="outline" asChild><Link to="/team-finder"><Users/>Find your team</Link></Button></div><div className="hero-meta"><span><CalendarDays size={13}/>19–21 February 2027</span><span><MapPin size={13}/>On campus</span><span><Zap size={13}/>Ideas into impact</span></div></div><span className="hero-stamp">BUILD WHAT’S NEXT ↗</span></section><section className="stats">{[{icon:Layers,value:`${events.length}`,label:'Events to explore'},{icon:Users,value:'3 days',label:'Of ideas & innovation'},{icon:Trophy,value:'₹1.45L',label:'Demo prize pool'},{icon:Ticket,value:'One campus',label:'Endless possibilities'}].map(s=><div className="stat" key={s.label}><div className="stat-icon"><s.icon size={20}/></div><div><strong>{s.value}</strong><span>{s.label}</span></div></div>)}</section><div className="catalog-layout" id="events"><section><div className="section-heading"><div><h2>Find your next challenge<span className="text-primary">.</span></h2><p>A little curiosity. A lot of possibility.</p></div><div className="searchbox"><Search/><input className="field" aria-label="Search events" placeholder="Search events…" value={search} onChange={e=>setSearch(e.target.value)}/></div></div><div className="filters">{categories.map(c=><Button key={c} variant={category===c?'default':'outline'} onClick={()=>setCategory(c)}>{c==='All events'&&<Layers size={12}/>} {c}</Button>)}</div><div className="flex items-center justify-between mb-4 gap-3"><span className="demo-note">{visible.length} events · {demo?'Development showcase — sample events':'Production events'}</span><Button variant="ghost" size="sm" onClick={()=>setDemo(!demo)}>{demo?'View live events':'View demo events'} <ArrowRight/></Button></div>{!visible.length?<div className="empty"><Search size={28}/><h3>{demo?'No events match your search':'Live events are coming soon'}</h3><p>{demo?'Try another category or search term.':'The organizers haven’t published production events yet.'}</p><Button variant="outline" className="mt-4" onClick={()=>{setSearch('');setCategory('All events');if(!demo)setDemo(true);}}>{demo?'Clear filters':'Explore demo events'}</Button></div>:<div className="event-grid">{visible.map(e=><article className="event-card" key={e.id}><EventArt category={e.category}/><div className="event-body"><h3>{e.title}</h3><p>{e.description}</p><div className="event-facts"><span><CalendarDays/>{dateLabel(e.starts_at)}</span><span><Users/>{e.team_max>1?`Team of ${e.team_min}–${e.team_max}`:'Individual'}</span></div><div className="status-line"><i/>{e.status==='open'&&new Date(e.deadline)>new Date()?'Registration open':'Registration closed'}</div><div className="event-bottom"><span className="prize"><Trophy size={12}/>{e.prize}</span><Button asChild variant="outline"><Link to="/events/$slug" params={{slug:e.slug}}>View event <ArrowUpRight/></Link></Button></div></div></article>)}</div>}</section><aside className="catalog-aside"><section className="aside-block"><h3><Clock/>Coming up next</h3>{events.slice(0,3).map(e=><Link className="schedule-row" key={e.id} to="/events/$slug" params={{slug:e.slug}}><div className="date-square">{new Date(e.starts_at).getDate()}<small>FEB</small></div><div><h4>{e.title}</h4><p>{e.venue}</p><p className="mt-1">{new Intl.DateTimeFormat('en-IN',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Kolkata'}).format(new Date(e.starts_at))} · {e.category}</p></div></Link>)}</section><section className="team-callout"><Users className="team-symbol"/><h3>Great minds. Better teams.</h3><p>Your missing teammate might be one connection away. Find people who bring something different.</p><Button asChild><Link to="/team-finder">Meet your team <ArrowRight/></Link></Button></section><section className="mini-note"><div className="flex gap-2 items-center text-foreground mb-2"><Sparkles size={14} className="text-cyan"/><strong>Your kind of challenge</strong></div>Select your interests in your profile to find events that fit you.<Button asChild variant="link" size="sm" className="px-0 mt-2"><Link to="/profile">Make it personal <ArrowRight/></Link></Button></section></aside></div></Shell>;}

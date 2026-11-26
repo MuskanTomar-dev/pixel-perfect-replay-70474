@@ -1,0 +1,8 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { useEffect,useState } from 'react';
+import { Shell } from '@/features/festival/shell';
+import { headMeta } from '@/features/festival/domain';
+import { Button } from '@/components/ui/button';
+import { supabase } from '@/integrations/supabase/client';
+export const Route=createFileRoute('/reset-password')({head:()=>headMeta('Reset Password','Securely choose a new password for your Hack4Tech account.'),component:Reset});
+function Reset(){const [valid,setValid]=useState(false);const [password,setPassword]=useState('');const [message,setMessage]=useState('');const [busy,setBusy]=useState(false);useEffect(()=>{const hash=new URLSearchParams(window.location.hash.slice(1));if(hash.get('type')==='recovery')setValid(true);const {data}=supabase.auth.onAuthStateChange(event=>{if(event==='PASSWORD_RECOVERY')setValid(true);});return()=>data.subscription.unsubscribe();},[]);return <Shell><form className="auth-page form-panel form-stack" onSubmit={async e=>{e.preventDefault();setBusy(true);const {error}=await supabase.auth.updateUser({password});setMessage(error?error.message:'Your password has been updated.');setBusy(false);}}><h1 className="text-2xl">Choose a new password</h1>{!valid?<p className="notice">Open the password recovery link from your email to continue.</p>:<><label>New password<input className="field" type="password" minLength={8} maxLength={128} required value={password} onChange={e=>setPassword(e.target.value)}/></label><Button disabled={busy}>Update password</Button></>}{message&&<p role="status" className="notice">{message}</p>}</form></Shell>;}

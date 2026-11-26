@@ -28,3 +28,8 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+- Keep festival domain validation and recommendation rules in `src/features/festival/domain.ts` so UI, server actions, and tests share the same constraints.
+- Use authenticated TanStack server functions and atomic database functions for registration and check-in; RLS and server authorization are authoritative.
+- Keep demo events explicitly flagged in the database and filter them separately from production events; never seed during page rendering.
+- Use the managed pathless authenticated layout for organizer pages and public inline account prompts for student pages.
